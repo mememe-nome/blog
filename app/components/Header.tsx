@@ -1,3 +1,4 @@
+import ThemeButton from "./$ThemeButton";
 import Logo from "./Logo";
 import PageWidthPadding from "./PageWidthPadding";
 
@@ -7,6 +8,7 @@ export default function Header() {
 			<PageWidthPadding>
 				<div className="flex justify-between items-center">
 					<Logo />
+					<ThemeButton />
 				</div>
 			</PageWidthPadding>
 		</div>

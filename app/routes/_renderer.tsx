@@ -13,6 +13,7 @@ export default jsxRenderer(({ children }) => {
 				<link rel="icon" href="/favicon.ico" />
 				<Link href="/app/style.css" rel="stylesheet" />
 				<Script src="/app/client.ts" async />
+				<Script src="/app/initTheme.ts" />
 			</head>
 			<body className="flex flex-col min-h-screen">
 				<div className="flex-grow">

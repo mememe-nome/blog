@@ -22,7 +22,19 @@ const postFiles = import.meta.glob<File>("/app/posts/**/*.{md,mdx}", {
 	eager: true,
 });
 
-export const getPosts = (): { posts: Post[] } => {
+export const getPostSlugs = (): { slug: string }[] => {
+	const postFilePaths = Object.keys(postFiles);
+	return postFilePaths
+		.map((path) => {
+			const relativePath = path.replace("/app/posts/", "");
+			const stem = relativePath.replace(/\.[^/.]+$/, "");
+			return stem;
+		})
+		.sort()
+		.map((stem) => ({ slug: stem }));
+};
+
+export const getPosts = (): Post[] => {
 	const posts = Object.entries(postFiles)
 		.map(([path, file]) => {
 			const match = path.match(/([^/]+)\.(md|mdx)$/);
@@ -41,12 +53,12 @@ export const getPosts = (): { posts: Post[] } => {
 			);
 		});
 
-	return { posts };
+	return posts;
 };
 
 export const getPost = (slug: string): Post => {
 	const posts = getPosts();
-	const post = posts.posts.find((post) => post.slug === slug);
+	const post = posts.find((post) => post.slug === slug);
 
 	if (!post) {
 		throw new Error(`File not found: ${slug}`);

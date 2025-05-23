@@ -18,6 +18,7 @@ export default defineConfig({
 		build(),
 		mdx({
 			jsxImportSource: "hono/jsx",
+			providerImportSource: "/app/lib/useMdx",
 			remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
 		}),
 	],

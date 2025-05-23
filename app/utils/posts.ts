@@ -18,12 +18,14 @@ export type Post = {
 	Component: () => JSX.Element;
 };
 
-const postFiles = import.meta.glob<File>("/app/posts/**/*.md", { eager: true });
+const postFiles = import.meta.glob<File>("/app/posts/**/*.{md,mdx}", {
+	eager: true,
+});
 
 export const getPosts = (): { posts: Post[] } => {
 	const posts = Object.entries(postFiles)
 		.map(([path, file]) => {
-			const match = path.match(/([^/]+)\.md$/);
+			const match = path.match(/([^/]+)\.(md|mdx)$/);
 			if (!match) throw new Error(`Invalid path, ${path}`);
 
 			return {

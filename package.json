@@ -9,8 +9,10 @@
 	},
 	"private": true,
 	"dependencies": {
+		"@mdx-js/rollup": "^3.1.0",
 		"hono": "^4.7.10",
-		"honox": "^0.1.40"
+		"honox": "^0.1.40",
+		"remark-gfm": "^4.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",

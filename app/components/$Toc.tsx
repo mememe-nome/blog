@@ -1,0 +1,25 @@
+import { useEffect } from "hono/jsx";
+import tocbot from "tocbot";
+
+export default function Toc() {
+	useEffect(() => {
+		if (!import.meta.env.DEV && import.meta.env.MODE !== "client") return;
+
+		tocbot.init({
+			tocSelector: ".toc",
+			contentSelector: ".post-content",
+			headingSelector: "h2, h3",
+			scrollSmoothOffset: -10,
+		});
+		return () => tocbot.destroy();
+	}, []);
+
+	return (
+		<div className="card">
+			<div className="card-body">
+				<h2 className="card-title">目次</h2>
+				<div class="toc" />
+			</div>
+		</div>
+	);
+}

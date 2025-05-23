@@ -4,11 +4,7 @@ import Code from "./Code";
 
 export function useMDXComponents() {
 	return {
-		h1: (props: JSX.IntrinsicElements["h1"]) => (
-			<h1 className="text-4xl font-bold py-2 border-b my-4" {...props}>
-				{props.children}
-			</h1>
-		),
+		h1: (props: JSX.IntrinsicElements["h1"]) => <></>,
 		h2: (props: JSX.IntrinsicElements["h2"]) => (
 			<h2 className="text-2xl font-semibold py-2 border-b mt-4 mb-2" {...props}>
 				{props.children}
@@ -18,11 +14,6 @@ export function useMDXComponents() {
 			<h3 className="font-semibold py-2 border-b" {...props}>
 				{props.children}
 			</h3>
-		),
-		h4: (props: JSX.IntrinsicElements["h4"]) => (
-			<h4 className="font-semibold -mb-4" {...props}>
-				{props.children}
-			</h4>
 		),
 		ol: (props: JSX.IntrinsicElements["ol"]) => (
 			<ol class="list-decimal list-inside mb-2">{props.children}</ol>

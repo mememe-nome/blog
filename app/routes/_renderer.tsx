@@ -1,5 +1,8 @@
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Link, Script } from "honox/server";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import PageWidthPadding from "../components/PageWidthPadding";
 
 export default jsxRenderer(({ children }) => {
 	return (
@@ -11,7 +14,13 @@ export default jsxRenderer(({ children }) => {
 				<Link href="/app/style.css" rel="stylesheet" />
 				<Script src="/app/client.ts" async />
 			</head>
-			<body>{children}</body>
+			<body className="flex flex-col min-h-screen">
+				<div className="flex-grow">
+					<Header />
+					<PageWidthPadding>{children}</PageWidthPadding>
+				</div>
+				<Footer />
+			</body>
 		</html>
 	);
 });

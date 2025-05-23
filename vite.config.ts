@@ -5,6 +5,8 @@ import honox from "honox/vite";
 import { defineConfig } from "vite";
 import mdx from "@mdx-js/rollup";
 import remarkGfm from "remark-gfm";
+import remarkFrontmatter from "remark-frontmatter";
+import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 
 export default defineConfig({
 	plugins: [
@@ -16,7 +18,7 @@ export default defineConfig({
 		build(),
 		mdx({
 			jsxImportSource: "hono/jsx",
-			remarkPlugins: [remarkGfm],
+			remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
 		}),
 	],
 });

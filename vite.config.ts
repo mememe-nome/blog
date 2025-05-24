@@ -7,12 +7,13 @@ import mdx from "@mdx-js/rollup";
 import remarkGfm from "remark-gfm";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
+import ssg from "@hono/vite-ssg";
 
 export default defineConfig({
 	plugins: [
 		honox({
 			devServer: { adapter },
-			client: { input: ["./app/style.css"] },
+			client: { input: ["./app/style.css", "./app/initTheme.ts"] },
 		}),
 		tailwindcss(),
 		build(),
@@ -20,6 +21,9 @@ export default defineConfig({
 			jsxImportSource: "hono/jsx",
 			providerImportSource: "/app/lib/useMdx",
 			remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
+		}),
+		ssg({
+			entry: "./app/server.ts",
 		}),
 	],
 });

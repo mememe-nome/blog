@@ -15,7 +15,7 @@ export default function Toc() {
 	}, []);
 
 	return (
-		<div className="card">
+		<div className="card shadow-sm shadow-base-300">
 			<div className="card-body">
 				<h2 className="card-title">目次</h2>
 				<div class="toc" />

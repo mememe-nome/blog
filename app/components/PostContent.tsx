@@ -7,7 +7,7 @@ export default function PostContent({
 	updatedAt,
 }: { children: Child; title: string; createdAt: string; updatedAt: string }) {
 	return (
-		<div className="card">
+		<div className="card shadow-sm shadow-base-300">
 			<div className="card-body">
 				<div className=" pb-2 border-b mb-4">
 					<h1 className="card-title text-4xl font-bold">

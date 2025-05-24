@@ -32,7 +32,7 @@ export default createRoute((c) => {
 						<a
 							href={`/posts/${post.slug}`}
 							key={post.slug}
-							className="card"
+							className="card shadow-sm shadow-base-300"
 						>
 							<div className="card-body">
 								<div className="card-title">{post.frontmatter.title}</div>

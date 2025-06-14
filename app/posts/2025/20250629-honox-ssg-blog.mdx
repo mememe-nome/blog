@@ -1,0 +1,360 @@
+---
+title: HonoX で SSG なブログを作る
+createdAt: 2025-06-29
+updatedAt: 2025-06-29
+---
+
+この2, 3年、[Hono](https://hono.dev) というフレームワークがアツいようです。
+
+そこで試しがてらブログを作ってみることにしました。
+作成したブログのリポジトリは [ここ](https://github.com/mememe-nome/blog) です。
+
+## 方針
+
+ブログを作る上で対応したいことが2つありました。
+
+まず1つ目は [MDX](https://mdxjs.com) 対応です。
+このようなブログでは Markdown を使用して記事を記述することが多いですが、Markdown では基本的なテキストのフォーマットしかできません。
+一方で、MDX では通常の Markdown に加えてカスタムコンポーネントを埋め込むことができ、よりリッチなコンテンツを作成することができます。
+カスタムコンポーネントの例を出しておくと下のような感じです。
+
+<Info>
+MDX によるカスタムコンポーネント
+</Info>
+
+2つ目はダークモード対応です。
+私自身ダークモードを好んで使用しているので、ブログもダークモードに対応させることにします。
+
+## ブログプロジェクトのセットアップ
+
+まずはプロジェクトのセットアップを行います。
+
+<Code>
+
+```bash
+$ bun create hono@latest blog
+```
+
+</Code>
+
+まずはプロジェクトを作成します。
+テンプレートは `honox` …はないので `x-basic` を選択します。これが HonoX を示しているようです。
+プロジェクトの作成ついでに [Biome](https://biomejs.dev) の導入やテンプレートの不要なコードの削除も済ませておきました。
+
+## daisyUI の導入
+
+HonoX のテンプレートには初期状態で [Tailwind CSS](https://tailwindcss.com) が導入されています。
+しかし、Tailwind のみで各コンポーネントのスタイルに統一感を持たせること、そもそもセンスの良いカラーリングを実現することは難しいです（私だけかもしれませんが…）。
+
+そこで、[daisyUI](https://daisyui.com) を導入しました。
+daisyUI は Tailwind CSS の上に構築されたコンポーネントライブラリで、提供されているコンポーネントを利用するだけでリッチな UI を簡単に実装できます。
+また、daisyUI は複数のカラーテーマを提供しており、それらを使用することだけで簡単にセンスの良いカラーリングの実現も可能です。
+明るいテーマや暗いテーマも複数用意されているので気に入ったものを選ぶだけでライト・ダークモード対応もできます。
+
+今回はライトテーマに caramellatte を、ダークテーマに coffee を利用することにしました。
+ただ、caramellatte は info、success、warning、error の色がデフォルトだとビビット過ぎたため、これらとその文字色をカスタムしています。
+coffee の方はデフォルトで良い感じだったのでカスタムしていません。
+テーマのカスタムと言っても、daisyUI では [Theme Generator](https://daisyui.com/theme-generator) が提供されているのでこれを利用して既存テーマを簡単に調整することができます。
+
+## Markdown 対応
+
+Markdown 対応のメインとなる html への変換処理は各種ライブラリに任せます。
+利用する主なライブラリは以下の通りです。
+
+- [@mdx-js/rollup](https://mdxjs.com/packages/rollup/)
+- [remark-gfm](https://github.com/remarkjs/remark-gfm)
+- [remark-frontmatter](https://github.com/remarkjs/remark-frontmatter)
+
+これらのライブラリを Vite Plugin として導入するのみで Markdown → html の変換ができるようになります。
+
+<Code filepath="vite.config.ts">
+
+```ts
+export default defineConfig({
+    plugins: [
+        mdx({
+            remarkPlugins: [remarkFrontmatter, remarkGfm],
+        }),
+    ],
+});
+```
+
+</Code>
+
+一方で Markdown・MDX ファイルの読み込みの設定は自前で行う必要がありますが、ルーティングについては HonoX の機能を利用できます。
+このブログでは各記事の URL は `/posts/:slug` という形式にしています。
+HonoX では `/app/routes` 以下にルーティング設定を記述していきますが、この `/posts/:slug` という URL を実現するためには `/app/routes/posts/` にルーティング設定ファイルを作成する必要があります。
+今回は `/app/routes/posts/[slug].tsx` というファイルを作成し、以下のようにルーティング設定を記述しました。
+
+<Code filepath="app/routes/posts/[slug].tsx">
+
+```tsx
+export default createRoute(async (c) => {
+    const slug = c.req.param("slug");
+    const post = getPost(slug);
+
+    return c.render(<div>{post.Component()}</div>);
+});
+```
+
+</Code>
+
+`const slug = c.req.param("slug");` としている部分で `/posts/:slug` の `:slug` の部分を取得しています。
+`slug` は各記事ファイルに対応しており、これを元に `getPost` 関数で記事の内容を取得しています。
+`getPost` 関数は自前で実装する必要があり、今回は以下のように実装しました。
+
+<Code filepath="app/utils/posts.ts">
+
+```ts
+export type Post = {
+    slug: string;
+    Component: () => JSX.Element;
+};
+
+const postFiles = import.meta.glob<File>("/app/posts/**/*.{md,mdx}", {
+    eager: true,
+});
+
+export const getPosts = (): { posts: Post[] } => {
+    // 各記事ファイルを取得
+};
+
+export const getPost = (slug: string): Post => {
+    const posts = getPosts();
+    const post = posts.posts.find((post) => post.slug === slug);
+
+    return post;
+};
+```
+
+</Code>
+
+ここでのキモは `import.meta.glob<File>("/app/posts/**/*.{md,mdx}", { eager: true });` の部分でしょうか。
+あまりちゃんとは理解できていないのですが、remark ファミリーによって frontmatter や MDX がうまく処理されているようです。
+あとは記事一覧を取得したり、そこから特定の記事を取得するだけです。
+
+## MDX 対応
+
+MDX 対応も Markdown 対応と同様にメインとなる html への変換処理はライブラリ（[remark-mdx-frontmatter](https://www.npmjs.com/package/remark-mdx-frontmatter)）に任せます。
+
+<Code filepath="vite.config.ts">
+
+```ts
+export default defineConfig({
+    plugins: [
+        mdx({
+            remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
+        }),
+    ],
+});
+```
+
+</Code>
+
+`vite.config.ts` では `remarkMdxFrontmatter` の導入に加えて、`providerImportSource` の設定も行っています。
+`providerImportSource` は MDX （と言いつつ Markdown も）のコンポーネントの設定で、ここでは `/app/lib/useMdx` を指定しています。
+実体の設定ファイルは `/app/lib/useMdx/index.tsx` で、以下のようにして各種 HTML タグやカスタムコンポーネントのスタイルを設定しました。
+
+<Code filepath="app/lib/useMdx/index.tsx">
+
+```ts
+export function useMDXComponents() {
+    return {
+        h2: (props: JSX.IntrinsicElements["h2"]) => (
+            <h2 className="text-2xl font-semibold py-2 border-b mt-4 mb-2" {...props}>
+                {props.children}
+            </h2>
+        ),
+        
+        Info: Info,
+        Code: Code
+    };
+}
+```
+
+</Code>
+
+ここで注目すべきは `Info: Info` や `Code: Code` の部分です。
+これは MDX のカスタムコンポーネントを定義しており、MDX ファイル内で `<Info>` タグを使用することで `/app/lib/useMdx/Info.tsx` で定義したコンポーネントが利用できるようになります。
+もちろん、同様の設定を書いてカスタムコンポーネントを増やしていくこともできます。
+
+## ダークモード対応
+
+daisyUI でのテーマ設定は `<html data-theme="caramellatte"></html>` のように `html` タグの `data-theme` 属性に利用したいテーマ名を指定することで行います。
+ダークモード対応ではこのテーマ名を変更すればよく、適当なスクリプトをテーマ切り替えボタンに紐付ければ実現できそうです。
+また、ローカルストレージを利用すればブラウザを閉じてもテーマを保持できるでしょう。
+
+注意すべき点として HonoX はデフォルトではインタラクションのない UI を生成します。
+つまり、テーマ切り替えボタンを単純に実装し配置しても機能しないということです。
+
+インタラクションのある UI を実現するには Islands Architecture を利用します。
+Islands Architecture ではまずインタラクションのない UI をレンダリングしたあと、インタラクションのあるコンポーネント（Islands コンポーネント）を読み込みます。
+HonoX では `/app/islands/` 以下に配置するか、プレフィックスとして `$` を付けたファイルが Islands コンポーネントとして扱われます。
+今回は後者の方法を利用して `/app/components/$ThemeButton.tsx` を作成しました。
+
+テーマ切り替えボタンは daisyUI が提供する Swap ボタンを利用しています。
+切り替え時のアニメーションが良い感じのボタンです。
+
+<Code filepath="app/components/$ThemeButton.tsx">
+
+```ts
+export default function ThemeButton() {
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            setIsDark(
+                document.documentElement.getAttribute("data-theme") ===
+                    themes.get("dark")?.displayName,
+            );
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        const nextIsDark =
+            document.documentElement.getAttribute("data-theme") ===
+            themes.get("dark")?.displayName;
+
+        if (nextIsDark) {
+            localStorage.setItem("data-theme", "light");
+            document.documentElement.setAttribute(
+                "data-theme",
+                themes.get("light")?.displayName || "light",
+            );
+            setIsDark(false);
+        } else {
+            localStorage.setItem("data-theme", "dark");
+            document.documentElement.setAttribute(
+                "data-theme",
+                themes.get("dark")?.displayName || "dark",
+            );
+            setIsDark(true);
+        }
+    };
+
+    return (
+        <label className="swap swap-rotate">
+            <input type="checkbox" onClick={toggleTheme} checked={isDark} />
+            <Sun className="swap-off h-10 w-10" />
+            <Moon className="swap-on h-10 w-10" />
+        </label>
+    );
+}
+```
+
+</Code>
+
+Islands コンポーネントはパスやファイル名が特別なだけで、通常のコンポーネントと同様に利用することができます。
+テーマ切り替えボタンは全ページで共通で利用するものなので `Header` コンポーネントに組み込んでいます。
+
+<Code filepath="app/components/Header.tsx">
+
+```ts
+export default function Header() {
+    return (
+        <div className="mb-4 py-2 bg-base-200">
+            <PageWidthPadding>
+                <div className="flex justify-between items-center">
+                    <Logo />
+                    <ThemeButton />
+                </div>
+            </PageWidthPadding>
+        </div>
+    );
+}
+```
+
+</Code>
+
+## SSG 対応
+
+[@hono/vite-ssg](https://www.npmjs.com/package/@hono/vite-ssg) を利用します。
+`vite-ssg` には `vite.config.ts` でエントリーポイントを指定します。
+
+<Code filepath="vite.config.ts">
+
+```ts
+export default defineConfig(({ mode }) => {
+    return {
+        plugins: [
+            ssg({
+                entry: "./app/server.ts",
+            }),
+        ],
+    };
+});
+```
+
+</Code>
+
+また、SSG のパラメータを設定する必要があります。
+このパラメータは各記事の URL を指定するもので、各記事ファイルの slug を取得して設定します。
+
+<Code filepath="app/routes/posts/[slug].tsx">
+
+```ts
+    ssgParams(() => {
+        const slugs = getPostSlugs();
+        return slugs;
+    }),
+```
+
+</Code>
+
+## CI/CD の設定
+
+GHA を利用して push 時に自動デプロイを行うように設定します。
+詳細な実行タイミングとしては個人の好みによるところがあると思いますが、今回は main ブランチへの push 時としました。
+
+<Code filepath=".github/workflows/deploy.yml">
+
+```yml
+on:
+    push:
+        branches: [main]
+```
+
+</Code>
+
+デプロイに必要なステップとしては以下のようになります。
+
+- ブランチのチェックアウト
+- Bun.js のインストール
+- 依存関係のインストール
+- ビルドの実行
+- ビルド成果物のデプロイ
+
+どのステップも複雑なことをするわけではないので、既存の actions を利用したり、シェルスクリプトを実行するだけで済みます。
+デプロイについても、デプロイ先として Cloudflare Workers を利用しているため Cloudflare より提供されている actions を利用することができます。
+
+<Code filepath=".github/workflows/deploy.yml">
+
+```yml
+        - name: Checkout
+            uses: actions/checkout@v4
+        - name: Setup Bun
+            uses: oven-sh/setup-bun@v2
+            with:
+                bun-version: '1.2.5'
+        - name: Install dependencies
+            run: bun install
+        - name: Build project
+            run: bun run build
+        - name: Deploy to Cloudflare Workers
+            uses: cloudflare/wrangler-action@v3
+            with:
+                apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+                command: deploy ./dist --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }}
+```
+
+</Code>
+
+## まとめ
+
+もっとシュッとできるものかと思っていましたが、作ってみると意外と面倒なことが多かったです。
+特にライブラリに処理を委譲している部分は雑な理解を重ねているのでブラックボックス感があります。
+とは言え、HonoX やその他のライブラリのおかげで面倒な部分は隠蔽できていると感じます。
+
+今後もぼちぼちと色々カスタマイズして行ければと良いですね。
+三日坊主にならないことを祈ります。

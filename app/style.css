@@ -1,3 +1,4 @@
+@import "./styles/syntax-hilight.css";
 @import 'tailwindcss' source('../app');
 @plugin "daisyui" { themes: coffee --prefersdark;}
 @plugin "daisyui/theme" {

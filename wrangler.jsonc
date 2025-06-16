@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "honox-blog-test",
-	"main": "./dist/index.js",
+	// "main": "./dist/index.js",
 	"compatibility_date": "2025-05-22",
 	"compatibility_flags": ["nodejs_compat"],
 	"assets": {

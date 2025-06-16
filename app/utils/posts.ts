@@ -31,7 +31,7 @@ export const getPostSlugs = (): { slug: string }[] => {
 			return stem;
 		})
 		.sort()
-		.map((stem) => ({ slug: stem }));
+		.map((stem) => ({ slug: stem.split("/").slice(1).join("/") }));
 };
 
 export const getPosts = (): Post[] => {

@@ -15,20 +15,28 @@ export default createRoute(
 		const post = getPost(slug);
 
 		return c.render(
-			<div className="flex flex-col lg:flex-row lg:justify-between gap-6">
-				<div className="lg:w-2/3 lg:pr-4">
-					{/* メインコンテンツ */}
-					<PostContent
-						title={post.frontmatter.title}
-						createdAt={post.frontmatter.createdAt}
-						updatedAt={post.frontmatter.updatedAt}
-					>
-						{post.Component()}
-					</PostContent>
+			<div>
+				{/* モバイル: 目次を上部に表示（折りたたみ） */}
+				<div className="block lg:hidden mb-6">
+					<Toc isMobile={true} />
 				</div>
-				<div className="lg:w-1/3 lg:pl-4">
-					<div className="lg:sticky lg:top-8">
-						<Toc />
+
+				{/* メインレイアウト */}
+				<div className="flex flex-col lg:flex-row lg:justify-between gap-6">
+					<div className="lg:w-2/3 lg:pr-4">
+						{/* メインコンテンツ */}
+						<PostContent
+							title={post.frontmatter.title}
+							createdAt={post.frontmatter.createdAt}
+							updatedAt={post.frontmatter.updatedAt}
+						>
+							{post.Component()}
+						</PostContent>
+					</div>
+					<div className="hidden lg:block lg:w-1/3 lg:pl-4">
+						<div className="lg:sticky lg:top-8">
+							<Toc isMobile={false} />
+						</div>
 					</div>
 				</div>
 			</div>,
